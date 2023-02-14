@@ -3,7 +3,7 @@ import ring_theory.ideal.basic
 import ring_theory.ideal.operations
 import .oka
 
-variables {B: Type} [comm_ring B] (f: B → B) (x: B)
+variables {B: Type} [comm_ring B] (L M : ideal B)
 
 
 def principal_ideal_set (A : Type) [comm_ring A]: set(ideal A) := {b: ideal A | ∃(a :A), b = ideal.span({a})}
@@ -84,7 +84,16 @@ begin
     exact goal,
   }, {
     intro hyp,
-
+    rw (principal_ideal_set_mem J) at h_pri,
+    cases h_pri with x hx,
+    rw hx at hyp,
+    rw ideal_ele_quotient_def at hyp,
+    rw ideal.mem_span_singleton_mul at hyp,
+    rcases hyp with ⟨x, H, hyp⟩,
+    rw ideal_ele_quotient_contains_rw at H,
+    rw mul_comm at hyp,
+    rw hyp at H,
+    exact H,
   }
 end
 
@@ -94,7 +103,7 @@ end
 
 lemma principal_oka_condition : (∀ (I : ideal B),
      (∃ (a : B),
-        ideal.span {a} ⊔ I ∈ principal_ideal_set B ∧ ideal_ele_quotient I a ∈ principal_ideal_set B) →
+        ideal.span {a} + I ∈ principal_ideal_set B ∧ ideal_ele_quotient I a ∈ principal_ideal_set B) →
      I ∈ principal_ideal_set B) :=
 begin
   intros I hyp,

@@ -1,5 +1,6 @@
 import tactic
 import ring_theory.ideal.basic
+import ring_theory.ideal.operations
 
 variables {A: Type} [comm_ring A]
 
@@ -13,158 +14,11 @@ def all_ideals := set(ideal A)
 
 #check is_proper (⊤ : ideal(A))
 
-
-def zero_is_ideal : ideal A :=
-{ carrier := {(0: A)},
-  zero_mem' := 
-  begin
-    simp,
-  end,
-  add_mem' :=
-  begin
-    intros a b ha hb,
-    have ha_rw: a = 0, {
-      cases ha,
-      refl,
-    },
-    have hb_rw: b = 0, {
-      cases hb,
-      refl,
-    },
-    rw ha_rw,
-    rw hb_rw,
-    ring_nf,
-    simp,
-  end,
-  smul_mem' :=
-  begin
-    intros c x hx,
-    have rw_hx: x = 0, {
-      use hx,
-    },
-    rw rw_hx,
-    simp,
-  end,
-}
-
-def set_to_ideal (eles: set A) (zero_mem : (0 : A) ∈ eles)
-    (add_mem: ∀ (a b : A), a ∈ eles → b ∈ eles → a + b ∈ eles)
-    (smul_mem: ∀ (c x: A), x ∈ eles → c • x ∈ eles): ideal A :=
-{
-  carrier := eles,
-  zero_mem' := zero_mem,
-  add_mem' := add_mem,
-  smul_mem' := smul_mem,
-}
-
-def ideal_quotient_set (I: ideal A) (J : ideal A): set A :=
-  {a| ∀ (j ∈ J), a • j ∈ I}
-
-lemma ideal_quotient_set_contains_rw (I: ideal A) (J : ideal A) (x : A): 
-  x ∈ (ideal_quotient_set I J) ↔ ∀ (j ∈ J), x • j ∈ I := 
-begin
-  refl,
-end
-
-lemma ideal_quotient_zero_mem (I : ideal A) (J : ideal A) : (0:A) ∈ (ideal_quotient_set I J) :=
-begin
-  rw ideal_quotient_set_contains_rw,
-  intros j hj,
-  simp,
-end
-
-lemma ideal_quotient_add_mem (I : ideal A) (J: ideal A) (a b : A) :
-  a ∈ ideal_quotient_set I J → b ∈ ideal_quotient_set I J → a + b ∈ ideal_quotient_set I J :=
-  begin
-    intros ha hb,
-    rw ideal_quotient_set_contains_rw at ha hb ⊢,
-    intros j hj,
-    specialize ha j hj,
-    specialize hb j hj,
-    simp,
-    rw right_distrib,
-    apply add_mem,
-    exact ha,
-    exact hb,
-  end
-
-lemma ideal_quotient_mul_mem (I: ideal A) (J: ideal A) (c x : A) :
-  x ∈ ideal_quotient_set I J → c • x ∈ ideal_quotient_set I J :=
-begin
-  repeat {rw ideal_quotient_contains_rw},
-  intros h j hj,
-  specialize h j hj,
-  simp,
-  rw mul_assoc,
-  apply ideal.mul_mem_left,
-  exact h,
-end
-
-def ideal_quotient (I J: ideal A) : ideal A :=
-{
-  carrier := ideal_quotient_set I J,
-  zero_mem' := ideal_quotient_zero_mem I J,
-  add_mem' := ideal_quotient_add_mem I J,
-  smul_mem' := ideal_quotient_mul_mem I J,
-}
-
-lemma ideal_quotient_contains_rw (I J : ideal A) (x : A):
-  x ∈ (ideal_quotient I J) ↔ ∀ (j ∈ J), x • j ∈ I := 
-begin
-  refl,
-end
-
-def ideal_ele_quotient (I : ideal A) (a : A) : ideal A :=
-  ideal_quotient I (ideal.span {a})
-
-def ideal_ele_quotient_def (I : ideal A) (a : A) : ideal_quotient I (ideal.span {a}) = ideal_ele_quotient I a :=
-begin
-  refl,
-end
-
-lemma ideal_ele_quotient_rw (I : ideal A) (a : A) :
-  ideal_ele_quotient I a = ideal_quotient I (ideal.span {a}) :=
-begin
-  refl,
-end
-
-
-def ideal_ele_quotient_contains_rw (I : ideal A) (a : A) (x : A) :
-  x ∈ ideal_ele_quotient I a ↔ (x * a) ∈ I :=
-begin
-  split,
-  {
-    intro h,
-    rw ideal_ele_quotient_rw at h,
-    rw ideal_quotient_contains_rw at h,
-    specialize h a,
-    apply h,
-    apply ideal.subset_span,
-    simp,
-  }, {
-    intro h,
-    rw ideal_ele_quotient_rw,
-    rw ideal_quotient_contains_rw,
-    intros j hj,
-    rw ideal.mem_span_singleton at hj,
-    have rw_divides := exists_eq_mul_right_of_dvd hj,
-    cases rw_divides with c,
-    rw rw_divides_h,
-    simp,
-    rw mul_comm a c,
-    rw ← mul_assoc,
-    rw mul_comm x c,
-    rw mul_assoc,
-    apply ideal.mul_mem_left,
-    exact h,
-  }
-end
-
 structure oka_family (α : Type) [comm_ring α] :=
 (carrier : set (ideal α))
 (contains_ring' : ⊤ ∈  carrier)
 (oka_condition' : ∀ (I : ideal α), 
-  (∃ (a : α), ((ideal.span {a}) ⊔ I) ∈ carrier ∧ (ideal_ele_quotient I a  ∈ carrier)) → I ∈ carrier)
+  (∃ (a : α), ((ideal.span {a}) ⊔ I) ∈ carrier ∧ (I.colon (ideal.span{a})  ∈ carrier)) → I ∈ carrier)
 
 
 attribute [ext] oka_family
@@ -195,7 +49,7 @@ begin
 end
 
 lemma oka_condition : ∀ (I : ideal A), 
-  (∃ (a : A), ((ideal.span {a}) ⊔ I) ∈ S ∧ (ideal_ele_quotient I a ∈ S)) → I ∈ S :=
+  (∃ (a : A), ((ideal.span {a}) ⊔ I) ∈ S ∧ (I.colon (ideal.span{a}) ∈ S)) → I ∈ S :=
 begin
   apply oka_family.oka_condition',
 end
@@ -279,12 +133,14 @@ begin
 end
 
 lemma quot_contains_self (I : ideal A) (a : A) :
-  I ≤ (ideal_ele_quotient I a) :=
+  I ≤ (I.colon (ideal.span{a})) :=
 begin
   intros i h,
-  rw ideal_ele_quotient_contains_rw,
+  rw ideal.mem_colon_singleton,
   exact ideal.mul_mem_right a I h,
 end
+
+#check ideal.mem_colon_singleton
 
 lemma max_non_oka_is_prime (I : ideal A) (K : oka_family A) :
   I ∉ K ∧ (∀(J : ideal A), I < J → J ∈ K) → I.is_prime :=
