@@ -10,6 +10,7 @@ import data.set.basic
 
 def B : ℝ → set ℤ  := λ r, { n | ∃ m : ℕ   , (m ≥ 1 ) ∧ ((n : ℤ ) = int.floor ((m : ℝ)  * r) ) }
 
+example : true = true := rfl
 
 lemma mem_b_iff {q : ℝ} {k : ℤ }  : (k ∈ (B q)) ↔ ∃ m : ℕ  , (m ≥ 1 ) ∧ (k : ℤ )  = int.floor ((m : ℝ) * q ) :=
 begin
