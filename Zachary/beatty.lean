@@ -4,13 +4,18 @@ import data.real.basic
 import algebra.order.floor
 import data.real.irrational
 import data.set.basic
+import data.real.basic
+import data.rat.basic
 
+
+-- TO DO
+-- change beatty def to m > 1
+-- prove collision part
 
 
 
 def B : ℝ → set ℤ  := λ r, { n | ∃ m : ℕ   , (m ≥ 1 ) ∧ ((n : ℤ ) = int.floor ((m : ℝ)  * r) ) }
 
-example : true = true := rfl
 
 lemma mem_b_iff {q : ℝ} {k : ℤ }  : (k ∈ (B q)) ↔ ∃ m : ℕ  , (m ≥ 1 ) ∧ (k : ℤ )  = int.floor ((m : ℝ) * q ) :=
 begin
@@ -22,6 +27,49 @@ begin
   rw set.mem_def,
   assumption,
 end
+
+lemma irrat_div_irrat_sub_one_irrat (q : ℝ) (hq : irrational q) (h_q_gt_one : q > 1) :
+  irrational (q / (q - 1)) :=
+begin
+  rw irrational_iff_ne_rational,
+  by_contra hc, push_neg at hc,
+  rcases hc with ⟨a, b, hf⟩,
+  change (q / (q - 1)) = ↑a / ↑b at hf,
+
+  have hf1 : (q - 1) * (q / (q - 1)) = (q - 1) * (↑a / ↑b) := congr_arg (has_mul.mul (q - 1)) hf,
+  rw mul_div at hf1,
+  rw mul_comm (q - 1) q at hf1,
+  rw ← mul_div at hf1,
+  rw div_self at hf1,
+  rw mul_one at hf1,
+
+  have hf2 : q * ↑b  = ((q - 1) * (↑a / ↑b)) * ↑b  := congr_fun (congr_arg has_mul.mul hf1) ↑b,
+  rw mul_assoc at hf2,
+  rw div_mul at hf2,
+  rw div_self at hf2,
+  rw div_one at hf2,
+  rw sub_mul at hf2,
+  rw one_mul at hf2,  
+  have hf3 : ↑a = q * ↑a - q * ↑b  := by linarith,
+  rw ← mul_sub at hf3,
+  have h_a_neq_b : (a : ℝ)  - ↑b ≠ 0 , {
+    sorry,
+  },    
+  have h_irrational : irrational (q * (↑a - ↑b)) := by sorry,
+  rw ← hf3 at h_irrational,
+  have h_rational : ¬ (irrational ↑a) := int.not_irrational a,
+  exact hq (false.rec (q ∈ set.range coe) (h_rational h_irrational)),
+  sorry,
+  sorry,
+end
+
+lemma p_is_positive (q : ℝ) (h_q_gt_one : q > 1) : (q / (q - 1)) > 0 :=
+begin
+  have hq : q - 1 > 0 := by linarith,
+  by_contra hc, push_neg at hc,
+  
+end
+
 
 -- Forward direction:
 -- complementary beatty sequences partition ℕ 
@@ -40,13 +88,10 @@ begin
   push_neg at h;
 
   cases h with hnq hnp,
-
-  -- How to do this?
-  -- rw int.floor_eq_iff
+  
   -- let m be an arbitrary integer
-   
+   -- have j
   sorry,
-
 
   }, {
   -- by contradiction, "collision"
@@ -63,7 +108,7 @@ begin
 
   have hm2 := int.floor_eq_iff.mp (hm.2).symm, 
   cases hm2 with hm_le hm_gt,
-  have hm_neq : ↑x ≠ ↑m * q ,
+  have hm_neq : ↑x ≠ ↑m * q,
   {
     -- use irrationality
     have h_m_neq_zero : m ≠ 0 := by linarith,
@@ -83,25 +128,8 @@ begin
     -- use irrationality
     have hp : irrational p,
     {
-      rw irrational_iff_ne_rational,
-      by_contra hc, push_neg at hc,
-      rcases hc with ⟨a, b, hf⟩,
-      change (q / (q - 1)) = ↑a / ↑b at hf,
-
-      have hf1 : (q - 1) * (q / (q - 1)) = (q - 1) * (↑a / ↑b) := congr_arg (has_mul.mul (q - 1)) hf,
-      rw mul_div at hf1,
-      rw mul_comm (q - 1) q at hf1,
-      rw ← mul_div at hf1,
-      rw div_self at hf1,
-      rw mul_one at hf1,
-
-      have hf12 : q * ↑b  = (q - 1) * (↑a / ↑b) * ↑b := congr_arg (has_mul.mul ↑b ) hf1,
-
-
-
-
-      -- q * (↑a - ↑b) = a 
-      -- show contradiction since lhs is irrational, a - b ≠ 0 
+      change irrational (q/(q-1)),
+      exact irrat_div_irrat_sub_one_irrat q hq h_q_gt_one,
     },
     have h_l_neq_zero : l ≠ 0 := by linarith,
     have h_l_neq_zero' : (l : ℚ)  ≠ 0 := nat.cast_ne_zero.mpr h_l_neq_zero,
