@@ -6,11 +6,11 @@ import data.real.irrational
 import data.set.basic
 import data.real.basic
 import data.rat.basic
-
+import .greg_lemmas
 
 
 -- TO DO
--- change beatty def to m > 1
+-- change beatty def to m ≥ 0
 -- prove collision part
 
 
@@ -64,20 +64,10 @@ begin
   sorry,
 end
 
-
-
-
--- Forward direction:
--- complementary beatty sequences partition ℕ 
-
-theorem beatty_theorem_forward ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) : 
-∀ n : ℕ,  (((↑n ∈ (B q)) ∨ (↑n ∈ B ( q/(q-1))))) ∧ (((B q) ∩ (B (q/(q-1)))) = ∅)
-:= 
+lemma beatty_theorem_forward_anti_collision ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) : 
+∀ n : ℕ,  (((↑n ∈ (B q)) ∨ (↑n ∈ B ( q/(q-1))))) :=
 begin
-  set p := (q/(q-1)),
   intro n,
-  split, {
-  -- by contradiction, "anti-collision" 
   rw mem_b_iff,
   rw mem_b_iff, 
   by_contra h, 
@@ -88,9 +78,14 @@ begin
   -- let m be an arbitrary integer
    -- have j
   sorry,
+end
 
-  }, {
+lemma beatty_theorem_forward_collision ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) : 
+∀ n : ℕ,  (((B q) ∩ (B (q/(q-1)))) = ∅) :=
+begin
   -- by contradiction, "collision"
+  intro n,
+  set p := (q/(q-1)),
   by_contra h, 
   change B q ∩ B p ≠ ∅ at h,
   rw ← set.nonempty_iff_ne_empty at h,
@@ -133,7 +128,7 @@ begin
     exact (irrational.ne_int h_rhs x).symm,
   },
   have hl_lt : ↑x < ↑l * p := ne.lt_of_le hl_neq hl_le,
-  have hp_pos : p > 0 := by sorry,
+  have hp_pos : p > 0 := p_is_positive q h_q_gt_one,
   have hl_lt2 : ↑x/p < ↑l := (div_lt_iff hp_pos).mpr hl_lt,
   have hl_gt2 : ↑l  < (↑x + 1)/p  := (lt_div_iff hp_pos).mpr hl_gt,
 
@@ -159,10 +154,20 @@ begin
   have h_lt' : ↑m  + ↑l < x + 1 := by sorry,
   have h_gt' : x < ↑m + ↑l  := by sorry,
   linarith,
+end
 
-  }
 
 
+-- Forward direction:
+-- complementary beatty sequences partition ℕ 
+
+theorem beatty_theorem_forward ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) : 
+∀ n : ℕ,  (((↑n ∈ (B q)) ∨ (↑n ∈ B ( q/(q-1))))) ∧ (((B q) ∩ (B (q/(q-1)))) = ∅)
+:= 
+begin
+  set p := (q/(q-1)),
+  intro n,
+  exact ⟨ beatty_theorem_forward_anti_collision q hq h_q_gt_one n, beatty_theorem_forward_collision q hq h_q_gt_one n⟩,
 end
 
 
