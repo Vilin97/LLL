@@ -8,6 +8,7 @@ import data.real.basic
 import data.rat.basic
 
 
+
 -- TO DO
 -- change beatty def to m > 1
 -- prove collision part
@@ -63,12 +64,7 @@ begin
   sorry,
 end
 
-lemma p_is_positive (q : ℝ) (h_q_gt_one : q > 1) : (q / (q - 1)) > 0 :=
-begin
-  have hq : q - 1 > 0 := by linarith,
-  by_contra hc, push_neg at hc,
-  
-end
+
 
 
 -- Forward direction:
