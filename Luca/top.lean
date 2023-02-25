@@ -12,6 +12,9 @@ import data.set.basic
 import topology.constructions
 import topology.separation
 import topology.basic
+import topology.sequences
+
+-- Winter 2022
 
 variables (X Y : Type) [topological_space X] [topological_space Y]
 
@@ -21,474 +24,6 @@ variable (S : set X)
 -- Let `f : X → Y` be a function
 variables (f : X → Y) 
 
--- AUTUMN 2022 (WINTER 2022 starts on line 491)
-
--- X, Y are path connected space, then their product is path connected
-example (h: path_connected_space X) (h1: path_connected_space Y):
-  path_connected_space (X × Y) :=
-begin
-  rw path_connected_space_iff_univ at h h1 ⊢,
-  unfold is_path_connected at h1 h ⊢,
-  cases h with x hx,
-  cases hx with h hx,
-  cases h1 with y hy,
-  cases hy with h1 hy,
-  use (x, y),
-  split,
-  exact set.mem_univ (x, y),
-  intro xy,
-  have h2: xy.fst ∈ (set.univ: set X),
-  exact set.mem_univ xy.fst,
-  specialize hx h2,
-  have h3: xy.snd ∈ (set.univ: set Y),
-  exact set.mem_univ xy.snd,
-  specialize hy h3,
-  intro xyuniv,
-  have h4: xy = (xy.fst, xy.snd),
-  exact prod.ext rfl rfl,
-  rw h4,
-  unfold joined_in at hx hy ⊢,
-  cases hy with p1 hy,
-  cases hx with p2 hx,
-  
-  let p := path.prod p2 p1,
-  use p,
-  intro interval,
-  specialize hx interval,
-  specialize hy interval,
-  exact set.mem_univ (p interval),
-end
-
--- Show that if U is open in X and A is closed in X, then U − A is open in X, and
--- A − U is closed in X.
-example (U : set X) (A : set X): 
-  is_open U ∧ is_closed A → is_open (U ∩ Aᶜ) ∧ is_closed (A ∩ Uᶜ) :=
-begin
-  intro h,cases h with h1 h2,
-  split,
-  {
-    have claim: is_open Aᶜ,
-    exact is_open_compl_iff.mpr h2,
-    exact is_open.inter h1 claim,
-  },
-  {
-    have claim: is_closed Uᶜ,
-    exact is_closed_compl_iff.mpr h1,
-    exact is_closed.inter h2 claim,
-  },
-end
-
--- a set u is open iff for all element x in it, there exist a neighborhood
--- of x that is contained in u.
-lemma is_open_iff_nhds' (u: set Y):
-  (∀ x ∈ u, (∃ v ∈ nhds x, v ⊆ u)) ↔ is_open u:=
-begin
-  split,
-  {
-    intro y,
-    rw ← is_closed_compl_iff,
-    rw is_closed_iff_nhds,
-    intro x,
-    specialize y x,
-    intro h,
-    change x ∈ u → false,
-    intro xu,
-    specialize y xu,
-    cases y with v y,
-    specialize h v,
-    cases y with H y,
-    specialize h H,
-    exact set.inter_compl_nonempty_iff.mp h y,
-  },
-  {
-    intro h,
-    intro x,
-    intro xu,
-    use u,
-    split,
-    exact is_open.mem_nhds h xu,
-    refl,
-  }, 
-end
-
--- if an element x is not in a subset u, then {x} and u are disjoint
-lemma singleton_not_in {X: Type} (x: X) (u: set X):
-  x ∉ u ↔ {x} ∩ u = ∅:=
-begin
-  split,
-  intro hx,
-  ext y,
-  split,
-  {
-    intro hy,
-    simp,
-    change x ∈ u → false at hx,
-    apply hx,
-    cases hy with hyx hyu,
-    cases hyx with hyx1 hyx2,
-    exact hyu,
-    
-  },
-  {
-    intro h,
-    exfalso,
-    exact h,
-  },
-
-  exact set.singleton_inter_eq_empty.mp,
-
-end
-
--- if u1 and u2 are disjoint and u3 subset of u2, then u1 and u3 are disjoint
-lemma inter_empty_subset {X: Type} (u1: set X) (u2: set X) (u3: set X) :
-  u1 ∩ u2 = ∅ ∧ u3 ⊆ u2 → u1 ∩ u3 = ∅ :=
-begin
-  intro h,
-  cases h with h1 h2,
-  ext x,
-  split,
-  {
-    intro h3,
-    cases h3 with h3 h4,
-    have h5: x ∈ u2,
-    exact h2 h4,
-    have h6: x ∈ u1 ∩ u2,
-    split,
-    exact h3,
-    exact h5,
-    rw h1 at h6,
-    exact h6,
-  },
-  {
-    intro h,
-    exfalso,
-    exact h,
-  },
-end
-
--- X, Y topological space, if Y is compact, then projection map π1 is closed map
-lemma projection_compact_closed (h: is_compact (set.univ: set Y)):
-  (is_closed_map (@prod.fst X Y)):=
-begin
-  unfold is_closed_map,
-  intro u,
-  intro hu,
-  -- want to show complement open
-  -- enough to show for each element x in complement, 
-  -- there exists nhds of x contained in complement
-  rw ← is_open_compl_iff,
-  rw ← is_open_iff_nhds',
-  intro x,
-  intro hx,
-  -- we can do this by using tube lemma 
-  -- WTS: there exists open v s.t. {x} x Y ⊆ v x Y ⊆ uᶜ
-  -- To use tube lemma: we need
-  -- 1. is_compact {x}
-  -- 2. is_compact Y (we have it in h)
-  -- 3. is_open uᶜ
-  -- 4. {x} x Y ⊆ uᶜ
-  have h1: is_compact {x}, -- 1
-  refine is_compact_singleton,
-
-  rw ← is_open_compl_iff at hu, -- 3
-
-  -- we have x ∈ π1(u)ᶜ, WTS: {x} x Y ⊆ uᶜ
-  have h2: set.prod {x} (set.univ: set Y) ⊆ uᶜ, -- 4
-  rw set.subset_compl_iff_disjoint,
-  rw set.mem_compl_iff at hx,
-  have h3: set.prod {x} (set.univ: set Y) = prod.fst⁻¹' {x},
-  refine set.prod_univ,
-  exact X,
-  exact set.has_singleton,
-  rw h3,
-  have h4: disjoint {x} (prod.fst '' u),
-  exact set.disjoint_singleton_left.mpr hx,
-  have h5: disjoint (prod.fst⁻¹' {x}) (prod.fst⁻¹' (prod.fst '' u)),
-  refine disjoint.preimage prod.fst h4,
-  exact Y,
-  have h6: u ⊆ prod.fst⁻¹' (prod.fst '' u),
-  exact set.subset_preimage_image prod.fst u,
-  rw set.disjoint_iff_inter_eq_empty at h5,
-  rw inter_empty_subset (prod.fst ⁻¹' {x}) (prod.fst ⁻¹' (prod.fst '' u)) u,
-  split,
-  exact h5,
-  exact h6,
-
-  -- use tube lemma (h3 is the result of tube lemma)
-  have h3: ∃ (u1 : set X) (v1 : set Y), is_open u1 ∧ is_open v1 ∧ {x} ⊆ u1 ∧ (set.univ: set Y) ⊆ v1 ∧ set.prod u1 v1 ⊆ uᶜ,
-  exact generalized_tube_lemma h1 h hu h2,
-
-  cases h3 with u1 h3,
-  use u1,
-  cases h3 with v1 h3,
-  cases h3 with hu1 h3,
-  cases h3 with hv1 h3,
-  cases h3 with hx1 h3,
-  cases h3 with h3 h4,
-  split,
-  rw mem_nhds_iff,
-  use u1,
-  split,
-  refl,
-  split,
-  exact hu1,
-  exact set.singleton_subset_iff.mp hx1,
-  -- prove u1 ⊆ π1(u)ᶜ 
-  have h5: v1 = (set.univ: set Y),
-  rw ← set.univ_subset_iff,
-  exact h3,
-  rw h5 at h4,
-  rw set.subset_compl_iff_disjoint at h4 ⊢,
-  
-  ext x1,
-  split,
-  {
-    intro hx2,
-    cases hx2 with hx2 hx3,
-    -- WTS: if x1 ∈ u1 ∩ π1(u), ∃ x2 ∈ u1 x Y ∩ u = ∅
-    have h6: ∃ x2 ∈ u, prod.fst x2 = x1, -- preimage
-    exact set.mem_image_iff_bex.mp hx3,
-    cases h6 with x2 h6,
-    cases h6 with h6 h7,
-    have h8: x2.fst ∈ u1,
-    exact set.mem_of_eq_of_mem h7 hx2,
-    have h9: x2.snd ∈ (set.univ: set Y),
-    exact set.mem_univ x2.snd,
-    have h10: (x2.fst, x2.snd) ∈ u1.prod set.univ, 
-    exact set.mk_mem_prod h8 h9,
-    have h11: x2 = (x2.fst, x2.snd),
-    exact prod.ext rfl rfl,
-    rw ← h11 at h10,
-    have h12: x2 ∈ u1.prod set.univ ∩ u,
-    exact set.mem_inter h10 h6,
-    rw h4 at h12,
-    exfalso,
-    exact h12,
-  },
-  {
-    intro hx1,
-    exfalso,
-    exact hx1,
-  },
-end
-
-
-
-def graph {X: Type} {Y: Type} (f: X → Y): set (X × Y) := {(x, f x)| x: X}
-
--- f: X → Y, Y compact Hausdorff
--- Then f is cts iff the graph of f is closed in X x Y.
-lemma cts_map_closed_graph (h1: is_compact (set.univ: set Y)) (h2: t2_space Y):
-  continuous f ↔ is_closed (graph f) :=
-begin
-  split,
-  {
-    intro h,
-    rw ← is_open_compl_iff,
-    rw ← is_open_iff_nhds',
-    intro xy,
-    intro hxy,
-    have h3: xy = (xy.fst, xy.snd),
-    exact prod.ext rfl rfl,
-    rw h3 at hxy,
-    have h4: xy.snd ≠ f xy.fst,
-    intro h4,
-    unfold graph at hxy,
-    simp at hxy,
-    specialize hxy xy.fst,
-    rw h3 at hxy,
-    apply hxy,
-    rw h4,
-    have h5: ∃ (u v : set Y), is_open u ∧ is_open v ∧ xy.snd ∈ u ∧ (f xy.fst) ∈ v ∧ (u ∩ v = ∅),
-    exact t2_separation h4,
-    cases h5 with u h5,
-    cases h5 with v h5,
-    cases h5 with hu h5,
-    cases h5 with hv h5,
-    cases h5 with hxyu h5,
-    cases h5 with hxyv h5,
-    have h6: is_open (f ⁻¹' u),
-    exact continuous_def.mp h u hu,
-    have h7: is_open (f ⁻¹' v),
-    exact continuous_def.mp h v hv,
-    have h8: is_open (set.prod (f ⁻¹' v) u),
-    exact is_open.prod h7 hu,
-    have claim: xy ∈ set.prod (f ⁻¹' v) u,
-    simp,
-    exact ⟨hxyv, hxyu⟩,
-    use set.prod (f ⁻¹' v) u,
-    split,
-    exact is_open.mem_nhds h8 claim,
-    rw set.subset_compl_iff_disjoint,
-    unfold graph,
-    ext a,
-    split,
-    {
-      intro ha,
-      cases ha with ha1 ha2,
-      simp at ha2,
-      cases ha2 with afst ha2,
-      have ha3: afst = a.fst,
-      exact (congr_arg prod.fst ha2).congr_right.mp rfl,
-      rw ha3 at ha2,
-      rw ← ha2 at ha1,
-      simp at ha1,
-      cases ha1 with ha ha1,
-      have ha4: f a.fst ∈ u ∩ v,
-      exact set.mem_inter ha1 ha,
-      rw h5 at ha4,
-      exact ha4,
-    },
-    {
-      intro ha,
-      exfalso,
-      exact ha,
-    },
-  },
-  { 
-    -- for x in X, v nhds of f(x), Gf ∩ X x (Y - v) closed
-    -- π1(Gf ∩ X x (Y - v)) is closed and its compl = f ⁻¹ (v)
-    intro h,
-    rw continuous_def,
-    intro s,
-    intro hs,
-    have h3: is_closed (set.prod (set.univ: set X) (sᶜ)),
-    apply is_closed.prod,
-    exact is_closed_univ,
-    exact is_closed_compl_iff.mpr hs,
-    let u: set (X × Y) := ((set.prod (set.univ: set X) (sᶜ)) ∩ graph f),
-    have h4: is_closed u,
-    exact is_closed.inter h3 h,
-    have h5: is_closed_map (@prod.fst X Y),
-    exact projection_compact_closed X Y h1,
-    have h6: is_closed (prod.fst '' u),
-    exact h5 u h4,
-    have h7: prod.fst '' u = (f ⁻¹' s)ᶜ,
-    ext x,
-    split,
-    {
-      intro hx,
-      intro hx1,
-      rw set.mem_preimage at hx1,
-      have h8: (x, f x) ∈ graph f,
-      unfold graph,
-      simp,
-      have h11: ∃ a ∈ u, prod.fst a = x,
-      exact set.mem_image_iff_bex.mp hx,
-      cases h11 with a h11,
-      cases h11 with ha h11,
-      have h12: a = (a.fst, a.snd),
-      exact prod.ext rfl rfl,
-      have h13: a.snd = f x,
-
-      rw h11 at h12,
-      rw h12 at ha,
-      have h10: (x, a.snd) ∈ graph f,
-      exact set.mem_of_mem_inter_right ha,
-      unfold graph at h10,
-      simp at h10,
-      exact eq.symm h10,
-      rw [h11, h13] at h12,
-      rw h12 at ha,
-      cases ha with ha1 ha2,
-      simp at ha1,
-      exact ha1 hx1,
-    },
-    {
-      intro hx,
-      simp at hx,
-      simp,
-      use f x,
-      split,
-      exact hx,
-      unfold graph,
-      simp,
-    },
-    rw ← is_closed_compl_iff,
-    rw ← h7,
-    exact h6,
-  },
-end
-
-
-example (h1: is_open_map f) (h2: function.surjective f) (h3: continuous f) :
-  quotient_map f :=
-begin
-  exact is_open_map.to_quotient_map h1 h3 h2,
-end
-
--- if f : X → Y is continuous, where X is compact and Y is Hausdorff,
--- then f is a closed map
-example (h1: continuous f) (h2: is_compact (set.univ: set X)) (h3: t2_space Y) :
-  is_closed_map f :=
-begin
-  unfold is_closed_map,
-  intro u,
-  intro closeu,
-  have h4: u ⊆ (set.univ: set X),
-  exact set.subset_univ u,
-  have h5: is_compact u,
-  exact compact_of_is_closed_subset h2 closeu h4,
-  have h6: is_compact (f '' u),
-  exact is_compact.image h5 h1,
-  exact is_compact.is_closed h6,
-end
-
---example (h1: t2_space X) (A: set X) (B: set X) (h2: is_compact A) (h3: is_compact B) (h4: disjoint A B):
---  ∃ (u v : set X), is_open u ∧ is_open v ∧ A ⊆ u ∧ B ⊆ v ∧ disjoint u v :=
---begin
---  sorry,
---end
-
-example (h1: t2_space X) (A: set X) (B: set X) (h2: is_compact A) (x ∈ B) (h3: disjoint A B):
-  ∃ (u: set X), is_open u ∧ x ∈ u ∧ disjoint u B :=
-begin
-  rw is_compact_iff_finite_subcover at h2,
-  sorry,
-end
-
-example (h1: quotient_map f) (y: Y) (h2: is_connected (set.univ: set Y)) (h3: is_connected (f⁻¹' {y})):
-  is_connected (set.univ: set X) :=
-begin
-  have h4: continuous f,
-  exact quotient_map.continuous h1,
-  unfold is_connected at h2 ⊢ h3,
-  split,
-  {
-    cases h3,
-    have h5: f⁻¹' {y} ⊆ (set.univ: set X),
-    exact (f ⁻¹' {y}).subset_univ,
-    exact set.nonempty.mono h5 h3_left,
-  },
-  {
-    unfold is_preconnected,
-    intro u,
-    intro v,
-    intro openu,
-    intro openv,
-    intro hypo,
-    intro nonemptyu,
-    intro nonemptyv,
-    by_contra,
-    rw set.not_nonempty_iff_eq_empty at h,
-    cases h3,
-    simp at h,
-    rw ← set.disjoint_iff_inter_eq_empty at h,
-    have h5: f⁻¹' {y} ⊆ set.univ,
-    exact (f ⁻¹' {y}).subset_univ,
-    have h6: f⁻¹' {y} ⊆ u ∪ v,
-    exact set.subset.trans h5 hypo,
-    have h6: f⁻¹' {y} ⊆ u ∨ f⁻¹' {y} ⊆ v,
-    exact is_preconnected.subset_or_subset openu openv h h6 h3_right,
-    sorry,
-  },
-  
-
-
-end
-
-
--- Winter 2022
 
 lemma singleton_fun {X: Type} {Y: Type} (f: X → Y) (x: X):
   f '' {x} = {f x}:=
@@ -512,7 +47,7 @@ begin
 end
 
 
--- Let f: X → Y be a quotient map, if each set f⁻¹({y}) is connected and if Y is connected, then X is connected.
+-- Thm: Let f: X → Y be a quotient map, if each set f⁻¹({y}) is connected and if Y is connected, then X is connected.
 example (h1: quotient_map f) (h2: is_connected (set.univ: set Y)) (h3: ∀ y : Y, is_connected (f⁻¹' {y})):
   is_connected (set.univ: set X) :=
 begin
@@ -792,7 +327,7 @@ begin
 end
 
 
--- If a set is connected, then its closure is connected
+-- Thm: If a set is connected, then its closure is connected
 example (A: set X) (h1: is_connected A) : (is_connected (closure A)) :=
 begin
   have sub: A ⊆ closure A,
@@ -837,74 +372,439 @@ begin
   },
 end
 
+-- big theorem
+
 def accu [metric_space X] (A: set X) := {x : X | ∀ ε > (0: ℝ), (((metric.ball x ε) ∩ A) \ {x}) ≠ ∅}
 
 def accu_compl [metric_space X] (A: set X) := {x: X | ∃ ε > (0: ℝ), ((metric.ball x ε) ∩ A) ⊆ {x}}
 
-def small_rad [metric_space X] (A: set X) (x: X) := {ε : ℝ | (ε > 0) → ((metric.ball x ε) ∩ A) ⊆ {x}}
+def small_rad [metric_space X] (A: set X) (x: X) := {ε : ℝ | (ε >= 0) ∧ ((metric.ball x ε) ∩ A) ⊆ {x} ∧ (ε < 1)}
 
--- def g [metric_space X](A: set X)  : X → ℝ
--- | x := 
---   if x ∈ accu_compl X A then  (small_rad X A x)
---   else 0
+noncomputable theory
+def one_rad [metric_space X] (A: set X): X → ℝ := λ x, (has_Sup.Sup (small_rad X A x)) / 2
 
+def x_ball_rad [metric_space X] (A: set X): X → set X := λ x, metric.ball x (one_rad X A x)
 
-
-example [metric_space X] (h: compact_space X) (A: set X) (h1: infinite A) : ((accu X A).nonempty) :=
+lemma zero_in_rad {X: Type} [metric_space X] (A: set X) (x: X): (0: ℝ) ∈ (small_rad X A x) :=
 begin
-  by_contra hypo,
-  rw set.not_nonempty_iff_eq_empty at hypo,
-  --unfold accu at hypo,
-  rw ← is_compact_univ_iff at h,
-  rw is_compact_iff_finite_subcover at h,
+  unfold small_rad,
+  simp,
+  intro y,
+  intro dist,
+  intro h2,
+  have h3: has_dist.dist y x ≥ 0,
+  exact dist_nonneg,
+  have h4: ¬has_dist.dist y x < 0,
+  exact not_lt.mpr h3,
+  exfalso,
+  apply h4,
+  exact dist,
+end
 
+-- small_rad X A x nonempty and bdd above
+lemma has_sup_rad {X: Type} [metric_space X] (A: set X) (x: X):  (small_rad X A x).nonempty ∧ bdd_above (small_rad X A x):=
+begin
+  have h: (small_rad X A x).nonempty,
+  have h1: (0: ℝ) ∈ (small_rad X A x),
+  exact zero_in_rad A x,
+  exact set.nonempty_of_mem h1,
 
-  have claim: ∀ (x: X), ∃ ε > 0, (metric.ball x ε) ∩ A ⊆ {x},
-  {
-    intro x,
-    have h2: x ∉ accu X A,
-    exact set.eq_empty_iff_forall_not_mem.mp hypo x,
-    unfold accu at h2,
-    simp at h2,
-    cases h2 with e h2,
-    use e,
-    cases h2 with h2 h3,
-    split,
-    exact h2,
-    exact set.diff_eq_empty.mp h3,
-  },
-  have claim2: ∀ (x: X), x ∈ accu_compl X A,
-  {
-    unfold accu_compl,
-    intro x,
-    specialize claim x,
-    simp,
-    simp at claim,
-    exact claim,
-  },
-
-  have claim3: ∀ (x: X), x ∈ accu_compl X A,
-  exact claim2,
-
-
+  have h1: bdd_above (small_rad X A x),
+  unfold bdd_above,
+  have h2: (1: ℝ) ∈ upper_bounds (small_rad X A x),
+  unfold small_rad,
+  unfold upper_bounds,
+  simp,
+  intro a,
+  intro ha,
+  intro h3,
+  intro h4,
+  exact le_of_lt h4,
+  exact set.nonempty_of_mem h2,
   
-  
-
-  -- --specialize h ℕ,
-  let U: X → set X := λ x, ((ε: ℝ) ∈ small_rad A x claim2) metric.ball x ε 
-  sorry,
+  exact ⟨h, h1⟩,
 
   
 end
 
--- example [metric_space X] (h: compact_space X) (A: set X) (h1: infinite A) : ((accu X A).nonempty) :=
 
-example [metric_space X] [metric_space Y] (h: compact_space X) (f: X → Y): continuous f ↔ is_compact (graph f) :=
+
+-- if b in small_rad X A x and 0 ≤ a < b, then a also in.
+lemma set_contain_less_dist {X: Type} [metric_space X] (A: set X) (x: X) (a: ℝ) (b: ℝ) : 
+  (a ≥ 0 ∧ b ∈ small_rad X A x ∧ a < b) → a ∈ small_rad X A x :=
 begin
+  intro h,
+  cases h with h1 h2,
+  cases h2 with h2 h3,
+  unfold small_rad at h2,
+  simp at h2,
+  cases h2 with h21 h22,
+  cases h22 with h22 h23,
+  unfold small_rad,
+  simp,
+  split,
+  exact h1,
+  split,
+  intro y,
+  
+  specialize h22 y,
+  intro h4,
+  have h5: dist y x < b,
+  linarith,
+  specialize h22 h5,
+  exact h22,
+  linarith,
+
+end
+
+lemma larger_than_or_equal_split (a: ℝ) (b: ℝ): a ≥ b ↔ (a > b) ∨ (a = b) :=
+begin
+
+  have h3: a = b ↔ b = a,
+  exact eq_comm,
+  have h2: a > b ↔ b < a,
+  exact iff.rfl,
+  split,
+  intro h,
+  have h1: b ≤ a,
+  exact h,
+  
+  rw h2,
+  rw h3,
+  exact lt_or_eq_of_le h,
+  
+  rw h2,
+  rw h3,
+  intro h,
+  have claim: b ≤ a,
+  exact le_of_lt_or_eq h,
+  exact claim,
+end
+
+-- Sup (small_rad X A x) >= 0
+lemma sup_small_rad_nonneg {X: Type} [metric_space X] (A: set X) (x: X): Sup (small_rad X A x) ≥ 0 :=
+begin
+  have h5: ∀ (a : ℝ), a ∈ (small_rad X A x) → 0 ≤ a,
+  intro a,
+  intro ha,
+  unfold small_rad at ha,
+  simp at ha,
+  cases ha with ha ha1,
+  exact ha,
+  exact real.Sup_nonneg (small_rad X A x) h5,
+end
+
+-- one_rad X A x ≥ 0
+lemma one_rad_nonneg {X: Type} [metric_space X] (A: set X) (x: X): one_rad X A x ≥ 0 :=
+begin
+  unfold one_rad,
+  have h: Sup (small_rad X A x) ≥ 0,
+  exact sup_small_rad_nonneg A x,
+  linarith,
+end
+
+-- one_rad X A x ∈ small_rad X A x
+lemma one_rad_in_small_rad {X: Type} [metric_space X] (A: set X) (x: X): one_rad X A x ∈ small_rad X A x :=
+begin
+  have h: (small_rad X A x).nonempty ∧ bdd_above (small_rad X A x),
+  exact has_sup_rad A x,
+  cases h with h1 h2,
+  have claim: ∀ ε < 0, ∃ (a: ℝ) (H: a ∈ small_rad X A x), has_Sup.Sup (small_rad X A x) + ε < a,
+  intro ε,
+  intro ε0,
+  exact real.add_neg_lt_Sup h1 ε0,
+  have h4: Sup (small_rad X A x) ≥  0,
+  exact sup_small_rad_nonneg A x,
+  rw larger_than_or_equal_split (Sup (small_rad X A x)) 0 at h4,
+  cases h4,
+  have h3: -Sup (small_rad X A x) / 2 < 0,
+  linarith,
+  unfold one_rad,
+  specialize claim (-Sup (small_rad X A x) / 2),
+  specialize claim h3,
+  cases claim with a claim,
+  cases claim with H claim,
+  have claim2: Sup (small_rad X A x) / 2 < a,
+  linarith,
+  have claim3: Sup (small_rad X A x) / 2 ≥ 0 ∧ a ∈ small_rad X A x ∧ Sup (small_rad X A x) / 2 < a,
+  split,
+  linarith,
+  exact ⟨H, claim2⟩,
+  exact set_contain_less_dist A x (Sup (small_rad X A x) / 2) a claim3,
+  unfold one_rad,
+  rw h4,
+  simp,
+  exact zero_in_rad A x,
+
+
+end
+
+-- If a positive number is in small_rad X A x, then one_rad X A x > 0
+lemma positive_sup_positive {X: Type} [metric_space X] (A: set X) (x: X) (h: ∃ a : ℝ, a > 0 ∧ a ∈ small_rad X A x):
+  one_rad X A x > 0 :=
+begin
+  cases h with a h,
+  cases h with h1 h2,
+  have claim: one_rad X A x ≥ 0,
+  exact one_rad_nonneg A x,
+  rw larger_than_or_equal_split at claim,
+  cases claim,
+  exact claim,
+  unfold one_rad at claim,
+  simp at claim,
+  have h: (small_rad X A x).nonempty ∧ bdd_above (small_rad X A x),
+  exact has_sup_rad A x,
+  cases h with nonem bdd,
+  have h3: ∀ (ε : ℝ), ε < 0 → (∃ (y : ℝ) (H : y ∈ (small_rad X A x)), a + ε < y),
+  intro ε,
+  intro neg,
+  use a,
+  split,
+  exact h2,
+  linarith,
+  rw ← real.le_Sup_iff bdd nonem at h3,
+  rw claim at h3,
+  exfalso,
+  have h4: a < a,
+  exact gt_of_gt_of_ge h1 h3,
+  simp at h4,
+  exact h4,
+end
+
+-- if x ∈ accu_compl X A, then x ∈ (metric.ball x (one_rad X A x))
+lemma accu_compl_x_in_small_rad {X: Type} [metric_space X] (A: set X) (x: X) (h: x ∈ accu_compl X A): 
+  x ∈ (metric.ball x (one_rad X A x)) :=
+begin
+  unfold accu_compl at h,
+  simp at h,
+  cases h with a h,
+  cases h with pos h,
+  have H: a < 1 ∨ a ≥ 1,
+  exact lt_or_ge a 1,
+  cases H,
+  have h1: ∃ a : ℝ, a > 0 ∧ a ∈ small_rad X A x,
+  use a,
+  split,
+  exact pos,
+  unfold small_rad,
+  simp,
+  split,
+  exact le_of_lt pos,
+  split,
+  exact h,
+  exact H,
+  simp,
+  exact positive_sup_positive A x h1,
+
+  have h1: (0.5: ℝ) ∈ small_rad X A x,
+  unfold small_rad,
+  simp,
+  split,
+  intro y,
+  specialize h y,
+  intro dist,
+  have h2: (0.5: ℝ) < a,
+  linarith,
+  simp at h2,
+  have h3: has_dist.dist y x < a,
+  linarith,
+  specialize h h3,
+  exact h,
+  have h4: (1 / 2 : ℝ) = (2⁻¹: ℝ),
+  exact one_div 2,
+  rw ← h4,
+  exact one_half_lt_one,
+  --unfold one_rad,
+  simp,
+  have h5: ∃ a : ℝ, a > 0 ∧ a ∈ small_rad X A x,
+  use (1 / 2: ℝ),
+  split,
+  exact one_half_pos,
+  exact h1,
+  exact positive_sup_positive A x h5,
+
+end
+
+-- x ∈ accu_compl X A → x ∈ x_ball_rad X A x
+lemma accu_compl_x_in_ball_rad {X: Type} [metric_space X] (A: set X) (x: X) (h: x ∈ accu_compl X A): 
+  x ∈ x_ball_rad X A x :=
+begin
+  unfold x_ball_rad,
+  exact accu_compl_x_in_small_rad A x h,
+end
+
+-- if accu is empty, all elements are in accu_compl
+lemma accu_empty_accu_compl {X: Type} [metric_space X] (A: set X) (h: accu X A = ∅): ∀ x: X, x ∈ accu_compl X A :=
+begin
+  intro x,
+  have h1: x ∉ accu X A,
+  exact set.eq_empty_iff_forall_not_mem.mp h x,
+  unfold accu_compl,
+  unfold accu at h1,
+  simp,
+  simp at h1,
+  cases h1 with e h1,
+  use e,
+  cases h1 with h1 h2,
+
+  split,
+  exact h1,
+  intro y,
+  intro h3,
+  intro hy,
+  have claim: y ∈ metric.ball x e ∩ A,
+  split,
+  exact metric.mem_ball.mpr h3,
+  exact hy,
+  have claim2: metric.ball x e ∩ A ⊆ {x},
+  exact set.diff_eq_empty.mp h2,
+  have claim3: y ∈ {x},
+  exact claim2 claim,
+  simp at claim3,
+  exact claim3,
+end
+
+
+lemma inter_bUnion {X: Type} (A: set X) (S: set X) (B: set X →  X → set X) : 
+  (A ∩ ⋃ (i : X) (H : i ∈ S), B A i) = ⋃ (i : X) (H : i ∈ S), A ∩ B A i := 
+begin
+  ext y,
   split,
   {
-    intro fcts,
-    sorry,
+    intro h,
+    cases h with h1 h2,
+    rw set.mem_bUnion_iff at h2 ⊢,
+    cases h2 with z h2,
+    use z,
+    cases h2 with hz h2,
+    split,
+    
+    exact hz,
+    split,
+    exact h1,
+    exact h2,
+    
   },
+  {
+    intro h,
+    rw set.mem_bUnion_iff at h,
+    cases h with z h,
+    cases h with hz h,
+    cases h with ha hb,
+    split,
+    exact ha,
+    rw set.mem_bUnion_iff,
+    use z,
+    exact ⟨hz, hb⟩,
+
+  },
+end
+
+-- A ∩ x_ball_rad X A x ⊆ {x}
+lemma x_ball_rad_inter_A {X: Type} [metric_space X] (A: set X): ∀ x: X, A ∩ x_ball_rad X A x ⊆ {x} :=
+begin
+  intro x,
+  have h2: one_rad X A x ∈ small_rad X A x,
+  exact one_rad_in_small_rad A x,
+  unfold small_rad at h2,
+  simp at h2,
+  cases h2 with h2 h3,
+  cases h3 with h3 h4,
+  simp,
+  intro hy,
+  specialize h3 hy,
+  intro hya,
+  intro h4,
+  specialize h3 h4,
+  apply h3,
+  exact hya,
+
+end
+
+-- y ∈ A ∩ x_ball_rad X A x → y = x
+lemma mem_x_ball_rad_inter_A {X: Type} [metric_space X] (A: set X) (x: X) (y: X) (h: y ∈ A ∩ x_ball_rad X A x):
+  y = x:=
+begin
+  have h1: ∀ x: X, A ∩ x_ball_rad X A x ⊆ {x},
+  exact x_ball_rad_inter_A A,
+  specialize h1 x,
+  have h2: y ∈ {x},
+  exact h1 h,
+  exact set.mem_singleton_iff.mp h2,
+end
+
+-- X is compact → Every infinite subset of X has a cluster point
+example {X: Type} [metric_space X] (h: is_compact (set.univ: set X)) (A: set X) (h1: infinite A) : ((accu X A).nonempty) :=
+begin
+  by_contra hypo,
+  rw set.not_nonempty_iff_eq_empty at hypo,
+  rw is_compact_iff_finite_subcover at h,
+  specialize h (x_ball_rad X A: X → set X),
+  have metric_open: ∀ (i : X), is_open (x_ball_rad X A i),
+  intro x,
+  unfold x_ball_rad,
+  exact metric.is_open_ball,
+  specialize h metric_open,
+
+  have claim: ∀ x: X, x ∈ accu_compl X A,
+  exact accu_empty_accu_compl A hypo,
+  have cover: set.univ ⊆ ⋃ (i : X), x_ball_rad X A i,
+  rw set.subset_def,
+  intro x,
+  intro hx,
+  have h2: x ∈ x_ball_rad X A x,
+  specialize claim x,
+  exact accu_compl_x_in_ball_rad A x claim,
+  have ball_subset: x_ball_rad X A x ⊆ ⋃ (i : X), x_ball_rad X A i,
+  exact set.subset_Union (x_ball_rad X A) x,
+  exact ball_subset h2,
+  specialize h cover,
+  cases h with S h,
+  have inter_A: A ∩ set.univ ⊆ A ∩ ⋃ (i : X) (H : i ∈ S), x_ball_rad X A i,
+  exact set.inter_subset_inter_right A h,
+  rw set.inter_univ A at inter_A,
+  --rw inter_bUnion A S (x_ball_rad X A) at h,
+  have h2: (A ∩ ⋃ (i : X) (H : i ∈ S), (x_ball_rad X A) i) = ⋃ (i : X) (H : i ∈ S), A ∩ (x_ball_rad X A) i,
+  exact inter_bUnion A S (x_ball_rad X),
+  rw h2 at inter_A,
+  have h3: ∀ i: X, A ∩ x_ball_rad X A i ⊆ {i},
+  exact x_ball_rad_inter_A A,
+
+  have h4: (⋃ (i : X) (H : i ∈ S), A ∩ x_ball_rad X A i) ⊆ ⋃ (i : X) (H : i ∈ S), {i},
+  rw set.subset_def,
+  intro x,
+  intro hx,
+  simp,
+  simp at hx,
+  cases hx with i hx,
+  cases hx with hx1 hx2,
+
+  have hx3: x ∈ A ∩ x_ball_rad X A i,
+  exact (set.mem_inter_iff x A (x_ball_rad X A i)).mpr hx2,
+  have hx4: x = i,
+  exact mem_x_ball_rad_inter_A A i x hx3,
+  rw hx4,
+  exact hx1,
+  have hA: A ⊆ ⋃ (i : X) (H : i ∈ S), {i},
+  exact set.subset.trans inter_A h4,
+  have h5:  (⋃ (i : X) (H : i ∈ S), {i} ).infinite,
+  apply set.infinite.mono hA,
+  exact set.infinite_coe_iff.mp h1,
+  apply h5,
+  let t: X → (set X) := λ t, {t},
+  have h6: ∀ (i : X), i ∈ S → (t i).finite,
+  intro i,
+  intro hi,
+  exact set.finite_singleton i,
+  have h7: (⋃ (i : X) (H : i ∈ S), {i})= ⋃ (i : X) (H : i ∈ S), t i,
+  exact rfl,
+  rw h7,
+  
+  have h8: ∀ (x : X), (x ∈ ⋃ (i : X) (H : i ∈ S), t i) ↔ x ∈ S,
+  intro x,
+  simp,
+  have h9: (coe S: set X).finite,
+  exact finset.finite_to_set S,
+  exact set.finite.bUnion h9 h6,
 end
 
