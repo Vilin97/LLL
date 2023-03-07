@@ -1,5 +1,6 @@
 import tactic
 import data.real.sqrt
+import data.polynomial
 
 /- fibonacci sequence definition -/
 /- here, we want N -> Z instead of N -> N because of potential issues that may come up when we try to go for (-1)^n. just makes my life easier ngl... -/
@@ -14,13 +15,8 @@ lemma fib_rule (n : ℕ) : fib(n + 2) = fib(n) + fib(n + 1) := rfl
 lemma fib_rule' (n : ℕ) (hn : n > 0) : fib(n + 1) = fib(n) + fib(n - 1) :=
 begin
   cases hn,
-  {
-    simp [fib],
-  },
-  {
-    simp [fib],
-    rw add_comm,
-  }
+  { simp [fib], },
+  { simp [fib], rw add_comm, }
 end
 lemma negative_fib_rule (n : ℕ) : fib(n + 2) - fib(n + 1) = fib (n) :=
 begin
@@ -89,20 +85,17 @@ begin
 end
 
 -- Fibonacci Addition Law : F_(m+n) = F_(n+1) F_m + F_n F_(m-1)
--- help from gareth ma on leanprover
-theorem fib_add (m n : ℕ) (hm : 0 < m) : fib(m + n) = fib(n + 1) * fib(m) + fib(n) * fib(m - 1) :=
+theorem fib_add (m n : ℕ) (hm : m > 0) : fib(m + n) = fib(n + 1) * fib(m) + fib(n) * fib(m - 1) :=
 begin
   apply strong_induction n,
   intros k h,
   cases k,
   { simp [fib], },
   { cases k,
-    {
-      simp [fib, fib_rule' m hm],
-    },
+    { simp [fib, fib_rule' m hm], },
     { simp only [nat.succ_eq_add_one, add_assoc],
       norm_num,
-      rw [← add_assoc, fib, nat.succ_eq_add_one, add_assoc m k 1],
+      rw [←add_assoc, fib, nat.succ_eq_add_one, add_assoc m k 1],
       rw [h k _, h (k + 1) _],
       rw [fib_rule (k + 1), fib_rule k],
       ring,
@@ -113,7 +106,6 @@ begin
 end
 
 -- Fibonacci Divisibility : F_m | F_n if m | n.
--- help from gareth ma on leanprover
 theorem fib_divide (m n : ℕ) (hm : m > 0) (hyp_div : m ∣ n) : fib(m) ∣ fib(n) :=
 begin
   rcases hyp_div with ⟨k, rfl⟩,
@@ -123,15 +115,51 @@ begin
     simp only [dvd_add, dvd_mul_left, dvd_mul_of_dvd_left k_ih], },
 end
 
+section binet
+open polynomial
 -- todo: prove binet
+noncomputable def φ := (1 + real.sqrt(5)) / 2
+noncomputable def τ := (1 - real.sqrt(5)) / 2
+-- noncomputable def f : polynomial ℝ := X^2 - X - 1
+
+#check is_root
+
+--lemma binet_lemma_τ : (f.is_root τ) :=
+
+lemma binet_lemma (x : ℝ) (hx : x^2 = x + 1) (n : ℕ) (hn : n > 0) : x^n = x*(fib n) + fib (n-1) :=
+begin
+  cases n,
+  { exfalso, linarith, },
+  { induction n with n,
+      { simp [fib], },
+      {
+        have H1 : x * ↑(fib (n + 1)) + ↑(fib n.succ) = (x + 1) * fib(n+1),
+        { linarith, },
+
+        rw [fib_rule],
+        simp,
+        rw [mul_add, add_assoc, H1, ←hx],
+        by_cases x = 0,
+        { exfalso, rw h at hx, linarith, },
+        {
+          rw [nat.succ_eq_add_one, pow_add, pow_one, mul_comm],
+          rw [pow_two, mul_assoc, ←mul_add],
+          rw [mul_right_inj' h, add_comm, ←nat.succ_eq_add_one],
+          apply n_ih,
+        },
+      },
+  },
+end
+
 theorem binet_formula (n : ℕ) : (fib(n) : ℝ) = (1 / real.sqrt(5)) * (((1 + real.sqrt(5)) / 2)^n + ((1 - real.sqrt(5)) / 2)^n) :=
 begin
   set φ := (1 + real.sqrt(5)) / 2, 
   set τ := (1 - real.sqrt(5)) / 2,
-    
+
   sorry,
 end
 
+end binet
 --useful tactics: norm_num, norm_cast, ring
 
 #check real.sqrt(5)
