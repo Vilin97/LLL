@@ -2,23 +2,20 @@ import tactic
 import ring_theory.ideal.basic
 import ring_theory.ideal.operations
 
-variables {A: Type} [comm_ring A]
+variables {A: Type} [comm_ring A] {a : A} {I : ideal A}
 
--- #check (univ: set (ideal A))
+#print submodule.colon
 
-
--- def powerset (B : set A) : set (set A) := {C : set A | C ⊆ B}
 
 def is_proper := {S : ideal A| ((1:A) ∉ S)}
 def all_ideals := set(ideal A)
 
-#check is_proper (⊤ : ideal(A))
 
 structure oka_family (α : Type) [comm_ring α] :=
 (carrier : set (ideal α))
 (contains_ring' : ⊤ ∈  carrier)
 (oka_condition' : ∀ (I : ideal α), 
-  (∃ (a : α), ((ideal.span {a}) ⊔ I) ∈ carrier ∧ (I.colon (ideal.span{a})  ∈ carrier)) → I ∈ carrier)
+  (∃ (a : α), (ideal.span(has_insert.insert a ↑I)) ∈ carrier ∧ (I.colon (ideal.span{a})  ∈ carrier)) → I ∈ carrier)
 
 
 attribute [ext] oka_family
@@ -49,7 +46,7 @@ begin
 end
 
 lemma oka_condition : ∀ (I : ideal A), 
-  (∃ (a : A), ((ideal.span {a}) ⊔ I) ∈ S ∧ (I.colon (ideal.span{a}) ∈ S)) → I ∈ S :=
+  (∃ (a : A), (ideal.span(has_insert.insert a ↑I)) ∈ S ∧ (I.colon (ideal.span{a}) ∈ S)) → I ∈ S :=
 begin
   apply oka_family.oka_condition',
 end
@@ -100,23 +97,22 @@ end
 
 
 lemma ssubset_gen_with_extra_element (I : ideal A) (a : A):
-  a ∉ I → (I < (ideal.span {a}) ⊔ I) :=
+  a ∉ I → (I < ideal.span (insert a ↑I)) :=
 begin
-  have leq : I ≤ (ideal.span {a}) ⊔ I, {
-    exact le_sup_right,
-  },
-  intro h,
-  have contains : a ∈ (ideal.span {a}) ⊔ I, {
-    rw ideal.mem_span_singleton_sup,
-    use 1,
+  have leq : I ≤ ideal.span (insert a ↑I), {
+    rw element_comparison,
+    intros x hyp,
+    rw ideal.mem_span_insert,
     use 0,
+    use x,
     split,
     {
-      exact ideal.zero_mem I,
-    }, {
-      ring_nf,
-    }
+      apply ideal.subset_span,
+      use hyp,
+    },
+    ring_nf,
   },
+  intro h,
   rw ← strict_containment_iff,
   split,
   {
@@ -125,7 +121,8 @@ begin
     use a,
     split,
     {
-      exact contains,
+      apply ideal.subset_span,
+      apply set.mem_insert,
     }, {
       exact h,
     }
@@ -140,7 +137,6 @@ begin
   exact ideal.mul_mem_right a I h,
 end
 
-#check ideal.mem_colon_singleton
 
 lemma max_non_oka_is_prime (I : ideal A) (K : oka_family A) :
   I ∉ K ∧ (∀(J : ideal A), I < J → J ∈ K) → I.is_prime :=
@@ -171,8 +167,8 @@ begin
         apply ssubset_gen_with_extra_element,
         exact H_x,
       }, {
-        have contains_y : y ∈ (ideal_ele_quotient I x), {
-          rw ideal_ele_quotient_contains_rw,
+        have contains_y : y ∈ (I.colon (ideal.span({x}))), {
+          rw ideal.mem_colon_singleton,
           rw mul_comm,
           exact h,
         },
@@ -193,3 +189,5 @@ begin
     exact contradiction,
   }
 end
+
+
