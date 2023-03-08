@@ -331,7 +331,9 @@ end
 example (A: set X) (h1: is_connected A) : (is_connected (closure A)) :=
 begin
   have sub: A ⊆ closure A,
-  exact subset_closure,
+  {
+     exact subset_closure,
+  },
   unfold is_connected at h1 ⊢,
   cases h1 with h1 h2,
   split,
@@ -352,12 +354,18 @@ begin
     specialize h2 openu,
     specialize h2 openv,
     have h3: A ⊆ u ∪ v,
-    exact has_subset.subset.trans sub contain,
+    {
+      exact has_subset.subset.trans sub contain,
+    },
     specialize h2 h3,
     have nonem_Au: (A ∩ u).nonempty,
-    exact closure_inter A u nonem_u openu,
+    {
+      exact closure_inter A u nonem_u openu,
+    },
     have nonem_Av: (A ∩ v).nonempty,
-    exact closure_inter A v nonem_v openv,
+    {
+      exact closure_inter A v nonem_v openv,
+    },
     specialize h2 nonem_Au,
     specialize h2 nonem_Av,
     rw set.nonempty_def at h2 ⊢,
@@ -371,6 +379,7 @@ begin
 
   },
 end
+
 
 -- big theorem
 
