@@ -26,41 +26,6 @@ begin
   ring,
 end
 
--- F_n * F_(n+2) - F_(n+1)^2 = (-1)^n
-theorem fib_close_square (n : ℕ) : fib(n) * fib(n + 2) - fib(n + 1)^2 = (-1)^(n+1) :=
-begin
-  induction n,
-  {
-    rw [zero_add, zero_add],
-    simp [fib],
-  },
-
-  have H1 : fib n_n.succ * fib n_n.succ + fib n_n.succ * fib (n_n.succ + 1) - fib (n_n.succ + 1) ^ 2 = fib n_n.succ * fib n_n.succ - fib (n_n.succ + 1) * (fib (n_n.succ + 1) - fib n_n.succ),
-    { ring },
-
-  have H2 : fib n_n.succ * fib n_n.succ - fib (n_n.succ + 1) * (fib (n_n.succ + 1) - fib n_n.succ) = fib n_n.succ * fib n_n.succ - fib (n_n.succ + 1) * fib (n_n.succ - 1),
-    { rw negative_fib_rule, ring },
-
-  have H3 : fib (n_n + 1) ^ 2 - fib n_n * fib (n_n + 2) = (-1) * (fib n_n * fib (n_n + 2) - fib (n_n + 1) ^ 2),
-    { linarith, },
-
-  have H4 : (-1 : ℤ) ^ (n_n + 2) = (-1 : ℤ) * (-1) ^ (n_n + 1),
-    { conv begin to_rhs, congr, rw ←pow_one (-1 : ℤ), skip end, rw ←pow_add, conv begin to_rhs, congr, skip, rw nat.add_left_comm end, },
-
-  {
-    rw [fib_rule, mul_add],
-    rw [H1, H2],
-    ring_nf,
-    rw [←nat.add_one],
-    simp,
-    rw [add_assoc],
-    simp,
-    -- conv begin to_lhs, congr, skip, congr, skip, congr, congr, skip, change 2, end,
-    rw [H3, H4],
-    linarith,
-  },
-end
-
 theorem strong_induction {P : ℕ → Prop} {H : ∀ n : ℕ, (∀ m : ℕ, m < n → P m) → P n} (n : ℕ) : P n :=
 begin
   have H1 : ∀ k ≤ n, P k, {
@@ -115,6 +80,41 @@ begin
   { simp only [fib, mul_zero, dvd_zero], },
   { rw [nat.succ_eq_add_one, mul_add, add_comm, mul_one, fib_add m (m * k_n) hm],
     simp only [dvd_add, dvd_mul_left, dvd_mul_of_dvd_left k_ih], },
+end
+
+-- F_n * F_(n+2) - F_(n+1)^2 = (-1)^n
+theorem fib_close_square (n : ℕ) : fib(n) * fib(n + 2) - fib(n + 1)^2 = (-1)^(n+1) :=
+begin
+  induction n,
+  {
+    rw [zero_add, zero_add],
+    simp [fib],
+  },
+
+  have H1 : fib n_n.succ * fib n_n.succ + fib n_n.succ * fib (n_n.succ + 1) - fib (n_n.succ + 1) ^ 2 = fib n_n.succ * fib n_n.succ - fib (n_n.succ + 1) * (fib (n_n.succ + 1) - fib n_n.succ),
+    { ring },
+
+  have H2 : fib n_n.succ * fib n_n.succ - fib (n_n.succ + 1) * (fib (n_n.succ + 1) - fib n_n.succ) = fib n_n.succ * fib n_n.succ - fib (n_n.succ + 1) * fib (n_n.succ - 1),
+    { rw negative_fib_rule, ring },
+
+  have H3 : fib (n_n + 1) ^ 2 - fib n_n * fib (n_n + 2) = (-1) * (fib n_n * fib (n_n + 2) - fib (n_n + 1) ^ 2),
+    { linarith, },
+
+  have H4 : (-1 : ℤ) ^ (n_n + 2) = (-1 : ℤ) * (-1) ^ (n_n + 1),
+    { conv begin to_rhs, congr, rw ←pow_one (-1 : ℤ), skip end, rw ←pow_add, conv begin to_rhs, congr, skip, rw nat.add_left_comm end, },
+
+  {
+    rw [fib_rule, mul_add],
+    rw [H1, H2],
+    ring_nf,
+    rw [←nat.add_one],
+    simp,
+    rw [add_assoc],
+    simp,
+    -- conv begin to_lhs, congr, skip, congr, skip, congr, congr, skip, change 2, end,
+    rw [H3, H4],
+    linarith,
+  },
 end
 
 section binet
