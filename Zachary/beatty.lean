@@ -10,8 +10,7 @@ import .greg_lemmas
 
 
 -- TO DO
--- change beatty def to m ≥ 0 !!!
--- prove collision part
+--O prove union part
 
 
 
@@ -159,7 +158,48 @@ begin
  sorry,
 end
 
-lemma beatty_theorem_forward_anti_collision ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) : 
+def Zpos := {z : ℤ | z > 0 }
+
+lemma rephrase_union (q p : ℝ) :  (∀ x ∈ Zpos, (∃ (m n : ℤ), (x = ⌊↑m * q⌋ ∨ x = ⌊↑n * p⌋)))
+  ↔ (∀ x ∈ Zpos, (∃ (k l : ℤ), (x < ⌊↑k * q⌋ ∨ x + 1 > ⌊↑(k + 1) * q⌋) ∨ (x < ⌊↑l * q⌋ ∨ x + 1 > ⌊↑(l + 1) * q⌋))) :=
+begin
+  split, {
+    intros hx x,
+    intro hx',
+    specialize hx x,
+    specialize hx hx',
+    rcases hx with ⟨m, n, hmn⟩, 
+    cases hmn, {
+      have hmn' : ⌊↑m * q⌋ = x := eq.symm hmn, clear hmn,
+      rw int.floor_eq_iff at hmn',
+      cases hmn' with hle hlt,
+      sorry,
+    }, {
+      have hmn' : ⌊↑n * p⌋ = x := eq.symm hmn, clear hmn,
+      rw int.floor_eq_iff at hmn',
+      cases hmn' with hle hlt,
+      sorry,
+    },
+    
+  }, {
+    intros hx x hx',
+    specialize hx x hx',
+    rcases hx with ⟨k, l, hkl⟩, 
+    sorry,
+  }
+end
+
+lemma anti_collisions (q p : ℝ) (k l : ℤ) (h_irrat : irrational q ∧ irrational p ) (hpq : 1/p + 1/q = 1) (x : ℤ) (hx : x > 0)  :
+  (∃ (k l : ℤ), (x < ⌊↑k * q⌋ ∨ x + 1 > ⌊↑(k + 1) * q⌋) ∨ (x < ⌊↑l * p⌋ ∨ x + 1 > ⌊↑(l + 1) * p⌋)) := 
+begin
+  by_contra hc, push_neg at hc,
+  specialize hc k l,
+  rcases hc with ⟨ ⟨hq1, hq2⟩, ⟨hp1, hp2⟩ ⟩,
+  sorry,
+end
+
+
+lemma beatty_theorem_forward_union'' ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) (h_inter : (B q) ∩ (B ( q/(q-1))) = ∅) : 
 (B q) ∪ (B ( q/(q-1))) = {n : ℤ | n ≥ 1 } :=
 begin
   have h_p_gt_one := h_p_gt_one q,
@@ -189,27 +229,56 @@ begin
     have hx' : x ≥ 1 := set.mem_def.mp hx, clear hx,
     rw set.mem_union,
     repeat {rw mem_b_iff},
-    by_contra hc, push_neg at hc,
-    cases hc with hxq hxp,
     sorry,
+    
+    
+
   },
 
+end
+      
 
+lemma beatty_theorem_forward_union' ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) (h_inter : (B q) ∩ (B ( q/(q-1))) = ∅) : 
+(B q) ∪ (B ( q/(q-1))) = {n : ℤ | n ≥ 1 } :=
+begin
+  have h_p_gt_one := h_p_gt_one q,
+  set p := (q/(q-1)),
+  ext,
+  split, {
+    intro hx,
+    repeat {rw set.mem_union at hx},
+    cases hx with hxq hxp,
+    {
+      rw mem_b_iff at hxq,
+      cases hxq with m hm,
+      cases hm with hm hx',
+      change x ≥ 1,
+      have hge := floor_ge_one m hm q h_q_gt_one,
+      rwa ← hx' at hge,
+    }, {
+      rw mem_b_iff at hxp,
+      cases hxp with m hm,
+      cases hm with hm hx',
+      change x ≥ 1,
+      have hge := floor_ge_one m hm p h_p_gt_one,
+      rwa ← hx' at hge,
+    },
+  }, {
+    intro hx,
+    have hx' : x ≥ 1 := set.mem_def.mp hx, clear hx,
+    rw set.mem_union,
+    repeat {rw mem_b_iff},
+    apply or_iff_not_imp_left.mpr,
+    intro h,
+    push_neg at h,
+    have h0 := h,
+    
 
-  -- intro n,
-  -- rw mem_b_iff,
-  -- rw mem_b_iff, 
-  -- by_contra h, 
-  -- push_neg at h;
+  },
 
-  -- cases h with hnq hnp,
-  
-
-  
-  -- sorry,
 end
 
-lemma beatty_theorem_forward_collision ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) : 
+lemma beatty_theorem_forward_inter ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) : 
 (((B q) ∩ (B (q/(q-1)))) = ∅) :=
 begin
   -- by contradiction, "collision"
@@ -287,7 +356,7 @@ end
 theorem beatty_theorem_forward ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) : ((B q) ∪ (B ( q/(q-1))) = {n : ℤ | n ≥ 1 }) ∧ (((B q) ∩ (B (q/(q-1)))) = ∅)
 := 
 begin
-  exact ⟨ beatty_theorem_forward_anti_collision q hq h_q_gt_one, beatty_theorem_forward_collision q hq h_q_gt_one⟩,
+  exact ⟨ beatty_theorem_forward_union'' q hq h_q_gt_one, beatty_theorem_forward_inter q hq h_q_gt_one⟩,
 end
 
 
@@ -296,8 +365,31 @@ end
 
 
 
-
+  
 
 
 -- Upensky's theorem 
 -- https://mathweb.ucsd.edu/~fan/ron/papers/63_01_uspensky.pdf
+
+-- if a set S of positive real numbers has the property that the beatty sequences formed by these numbers 
+-- partition the positive natural numbers, then |S| < 3
+
+
+def P : finset ℝ → Prop := λ S,  ((⋃ (r : S) , B r) = {n : ℤ | n > 1 }) ∧ ((⋂ (r : S) , B r) = ∅)
+
+lemma p_is_true (S : finset ℝ ) : P S ↔ ((⋃ (r : S) , B r) = {n : ℤ | n > 1 }) ∧ ((⋂ (r : S) , B r) = ∅) :=
+begin
+  refl,
+end
+ 
+theorem upensky (S : finset ℝ ) (hS : P S) : ∀ s ∈ (P⁻¹'({true})), finset.card s < 3 :=
+begin
+  by_contra hc, push_neg at hc,
+  cases hc with S hn,
+  cases hn,
+  rewrite set.mem_preimage at hn_left,
+  rw p_is_true at hn_left,
+  dsimp at hn_left,
+  sorry,
+  
+end
