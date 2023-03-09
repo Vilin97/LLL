@@ -34,11 +34,11 @@ end
 
 -- lemma span_singleton_self (x : B): x ∈ (ideal.span {x}) :=
 
-lemma prod_quot_subset (I J : ideal B) : J • ideal_quotient I J ≤ I :=
+lemma prod_quot_subset (I J : ideal B) : J • I.colon J ≤ I :=
 begin
   rw submodule.smul_le,
   intros r hyp_r n hyp_n,
-  rw ideal_quotient_contains_rw at hyp_n,
+  rw submodule.mem_colon at hyp_n,
   simp at hyp_n ⊢,
   rw mul_comm,
   apply hyp_n,
@@ -55,9 +55,8 @@ begin
   exact set_like.le_def,
 end
 
-lemma prod_quot_ideal (I J : ideal B) (h_pri : J ∈ principal_ideal_set B) (h_less : I ≤ J) : I = J * (ideal_quotient I J) :=
+lemma prod_quot_ideal (I J : ideal B) (h_pri : J ∈ principal_ideal_set B) (h_less : I ≤ J) : I = J * (I.colon J) :=
 begin
-  
   rw ← eq_iff,
   intro b,
   split,
@@ -67,15 +66,15 @@ begin
     cases h_pri with x hx,
     rw element_comparison at h_less,
     have hyp_j := h_less b hyp,
-    rw [hx, ideal_ele_quotient_def],
+    rw hx,
     rw [hx, ideal.mem_span_singleton] at hyp_j,
     unfold has_dvd.dvd at hyp_j,
     cases hyp_j with c,
     rw mul_comm at hyp_j_h,
     rw hyp_j_h at hyp,
-    rw ← ideal_ele_quotient_contains_rw at hyp,
-    rw mul_comm at hyp_j_h,
     rw hyp_j_h,
+    rw mul_comm,
+    rw ← ideal.mem_colon_singleton at hyp,
     have trivial_fact : x ∈ ideal.span {x},
     {
       rw ideal.mem_span_singleton,
@@ -87,11 +86,10 @@ begin
     rw (principal_ideal_set_mem J) at h_pri,
     cases h_pri with x hx,
     rw hx at hyp,
-    rw ideal_ele_quotient_def at hyp,
     rw ideal.mem_span_singleton_mul at hyp,
-    rcases hyp with ⟨x, H, hyp⟩,
-    rw ideal_ele_quotient_contains_rw at H,
-    rw mul_comm at hyp,
+    rcases hyp with ⟨z, H, hyp⟩,
+    rw ideal.mem_colon_singleton at H,
+    rw mul_comm at H,
     rw hyp at H,
     exact H,
   }
@@ -101,15 +99,71 @@ end
 -- begin
 -- end
 
+lemma ideal_colon_element_leq (I : ideal B) (a : B) : I ≤ (ideal.span(insert a ↑I)) :=
+begin
+  rw subset,
+  intros b hyp,
+  apply ideal.subset_span,
+  finish,
+end
+
+lemma colon_colon (a : B) (I: ideal B) : I.colon (ideal.span(insert a ↑I)) = I.colon (ideal.span{a}) :=
+begin
+  ext,
+  rw ideal.mem_colon_singleton,
+  split,
+  {
+    rw submodule.mem_colon,
+    intro hyp,
+    specialize hyp a,
+    apply hyp,
+    apply ideal.subset_span,
+    apply set.mem_insert,
+  }, {
+    intro hyp,
+    rw submodule.mem_colon,
+    intro p,
+    rw ideal.mem_span_insert,
+    intro hyp,
+    rcases hyp with ⟨l,c,H,rwp⟩,
+    rw ideal.span_eq at H,
+    rw rwp,
+    simp,
+    rw ring.left_distrib,
+    apply ideal.add_mem,
+    {
+      rw ← mul_assoc,
+      rw mul_comm x,
+      rw mul_assoc,
+      apply ideal.mul_mem_left,
+      exact hyp,
+    }, {
+      apply ideal.mul_mem_left,
+      exact H,
+    }
+  }
+end
+
 lemma principal_oka_condition : (∀ (I : ideal B),
      (∃ (a : B),
-        ideal.span {a} + I ∈ principal_ideal_set B ∧ ideal_ele_quotient I a ∈ principal_ideal_set B) →
+        ideal.span (insert a ↑I)∈ principal_ideal_set B ∧ I.colon (ideal.span{a}) ∈ principal_ideal_set B) →
      I ∈ principal_ideal_set B) :=
 begin
   intros I hyp,
   cases hyp with a hyp,
   cases hyp with hyp1 hyp2,
-  sorry,
+  have triv_contains := ideal_colon_element_leq I a,
+  rw prod_quot_ideal I (ideal.span(insert a ↑I)) hyp1 triv_contains,
+  rw principal_ideal_set_mem at hyp2,
+  cases hyp2 with c,
+  rw colon_colon,
+  rw hyp2_h,
+  rw principal_ideal_set_mem at hyp1,
+  cases hyp1 with d,
+  rw hyp1_h,
+  rw ideal.span_singleton_mul_span_singleton,
+  rw principal_ideal_set_mem,
+  use d * c,
 end
 
 #check oka_family.mk (principal_ideal_set B) (top_is_principal) (principal_oka_condition)
