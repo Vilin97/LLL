@@ -159,7 +159,7 @@ begin
   set φ := (1 + real.sqrt(5)) / 2, 
   set τ := (1 - real.sqrt(5)) / 2,
 
-  rw [binet_lemma, binet_lemma],
+  rw [original_binet_lemma, original_binet_lemma],
   simp[φ, τ],
   field_simp,
   norm_num,
