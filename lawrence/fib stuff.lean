@@ -2,6 +2,8 @@ import tactic
 import data.real.sqrt
 import data.polynomial
 
+/- had help from people on leanprover zulip. thank you! (gareth ma and kevin buzzard) -/
+
 /- fibonacci sequence definition -/
 /- here, we want N -> Z instead of N -> N because of potential issues that may come up when we try to go for (-1)^n. just makes my life easier ngl... -/
 def fib : ℕ -> ℤ
