@@ -13,7 +13,7 @@ import .greg_lemmas
 --O prove union part
 
 
-
+-- definition of a Beatty seq
 def B : ℝ → set ℤ  := λ r, { n | ∃ m : ℤ , (m ≥ 1 ) ∧ ((n : ℤ ) = int.floor ((m : ℝ)  * r) ) }
 
 
@@ -28,6 +28,8 @@ begin
   assumption,
 end
 
+
+-- good examples of easy lemmas in lean
 lemma self_div_self_sub_one_neq_one (q : ℝ ) (hq : q > 1) : q/(q-1) ≠ 1 :=
 begin
   by_contra hc,
@@ -141,15 +143,6 @@ end
 
 lemma floor_ge_one (m : ℤ ) (hm : m ≥ 1 ) (q : ℝ) (hq : q > 1) : ⌊↑m * q⌋ ≥ 1 :=
 begin
---  have hmq := int.sub_one_lt_floor (↑m * q ),
---  have hm' : (m : ℝ)  ≥ 1 := int.one_le_cast.mpr hm,
---  have hmul : ↑m * q ≥ 1,
---  {
---   sorry,
---  },
---  change 1 ≤ ⌊↑m * q⌋,
---  change 1 ≤ ↑m * q at hmul,
---  rw int.le_floor,
  sorry,
 end
 
@@ -160,6 +153,8 @@ end
 
 def Zpos := {z : ℤ | z > 0 }
 
+
+-- proof I am basing off assumes an equivalent definition to B p U B q = Zpos
 lemma rephrase_union (q p : ℝ) :  (∀ x ∈ Zpos, (∃ (m n : ℤ), (x = ⌊↑m * q⌋ ∨ x = ⌊↑n * p⌋)))
   ↔ (∀ x ∈ Zpos, (∃ (k l : ℤ), (x < ⌊↑k * q⌋ ∨ x + 1 > ⌊↑(k + 1) * q⌋) ∨ (x < ⌊↑l * q⌋ ∨ x + 1 > ⌊↑(l + 1) * q⌋))) :=
 begin
@@ -189,6 +184,7 @@ begin
   }
 end
 
+-- proof of rephrased union condition, in progress
 lemma anti_collisions (q p : ℝ) (k l : ℤ) (h_irrat : irrational q ∧ irrational p ) (hpq : 1/p + 1/q = 1) (x : ℤ) (hx : x > 0)  :
   (∃ (k l : ℤ), (x < ⌊↑k * q⌋ ∨ x + 1 > ⌊↑(k + 1) * q⌋) ∨ (x < ⌊↑l * p⌋ ∨ x + 1 > ⌊↑(l + 1) * p⌋)) := 
 begin
@@ -198,44 +194,6 @@ begin
   sorry,
 end
 
-
-lemma beatty_theorem_forward_union'' ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) (h_inter : (B q) ∩ (B ( q/(q-1))) = ∅) : 
-(B q) ∪ (B ( q/(q-1))) = {n : ℤ | n ≥ 1 } :=
-begin
-  have h_p_gt_one := h_p_gt_one q,
-  set p := (q/(q-1)),
-  ext,
-  split, {
-    intro hx,
-    repeat {rw set.mem_union at hx},
-    cases hx with hxq hxp,
-    {
-      rw mem_b_iff at hxq,
-      cases hxq with m hm,
-      cases hm with hm hx',
-      change x ≥ 1,
-      have hge := floor_ge_one m hm q h_q_gt_one,
-      rwa ← hx' at hge,
-    }, {
-      rw mem_b_iff at hxp,
-      cases hxp with m hm,
-      cases hm with hm hx',
-      change x ≥ 1,
-      have hge := floor_ge_one m hm p h_p_gt_one,
-      rwa ← hx' at hge,
-    },
-  }, {
-    intro hx,
-    have hx' : x ≥ 1 := set.mem_def.mp hx, clear hx,
-    rw set.mem_union,
-    repeat {rw mem_b_iff},
-    sorry,
-    
-    
-
-  },
-
-end
       
 
 lemma beatty_theorem_forward_union' ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) (h_inter : (B q) ∩ (B ( q/(q-1))) = ∅) : 
@@ -281,13 +239,15 @@ end
 lemma beatty_theorem_forward_inter ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) : 
 (((B q) ∩ (B (q/(q-1)))) = ∅) :=
 begin
-  -- by contradiction, "collision"
+  -- let p be defined as
   set p := (q/(q-1)),
+  -- by contradiction
   by_contra h, 
+  -- rewrite to unfold definitions
   change B q ∩ B p ≠ ∅ at h,
   rw ← set.nonempty_iff_ne_empty at h,
   rw set.nonempty_def at h,
-
+  -- introduce variables from existence
   rcases h with ⟨x, hxq, hxp⟩,
   rw mem_b_iff at *,
 
@@ -296,6 +256,8 @@ begin
 
   have hm2 := int.floor_eq_iff.mp (hm.2).symm, 
   cases hm2 with hm_le hm_gt,
+
+  --inequality can't be true because of irrationality
   have hm_neq : ↑x ≠ ↑m * q,
   {
     -- use irrationality
@@ -304,6 +266,7 @@ begin
     have h_rhs : irrational (↑(m : ℚ) * q) := irrational.rat_mul hq h_m_neq_zero',
     exact (irrational.ne_int h_rhs x).symm,
   },
+  -- manipulate inequalities
   have hm_lt : ↑x < ↑m * q := ne.lt_of_le hm_neq hm_le,
   have hq_pos : q > 0 := by linarith,
   have hm_lt2 : ↑x/q < ↑m := (div_lt_iff hq_pos).mpr hm_lt,
@@ -311,7 +274,7 @@ begin
 
   have hl2 := int.floor_eq_iff.mp (hl.2).symm,
   cases hl2 with hl_le hl_gt,
-  have hl_neq : ↑x ≠ ↑l * p ,
+  have hl_neq : ↑x ≠ ↑l * p,
   {
     -- use irrationality
     have hp : irrational p,
@@ -353,17 +316,17 @@ end
 -- Forward direction:
 -- complementary beatty sequences partition ℕ 
 
-theorem beatty_theorem_forward ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) : ((B q) ∪ (B ( q/(q-1))) = {n : ℤ | n ≥ 1 }) ∧ (((B q) ∩ (B (q/(q-1)))) = ∅)
-:= 
+theorem beatty_theorem_forward ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) :
+ ((B q) ∪ (B ( q/(q-1))) = {n : ℤ | n ≥ 1 }) ∧ (((B q) ∩ (B (q/(q-1)))) = ∅) := 
 begin
-  exact ⟨ beatty_theorem_forward_union'' q hq h_q_gt_one, beatty_theorem_forward_inter q hq h_q_gt_one⟩,
+  exact ⟨ beatty_theorem_forward_union' q hq h_q_gt_one, beatty_theorem_forward_inter q hq h_q_gt_one⟩,
 end
 
 
 -- Converse direction
 -- if two beatty sequence B p, B q partition ℕ, then 1/p + 1/ q = 1
 
-
+-- In progress...
 
   
 
@@ -393,3 +356,74 @@ begin
   sorry,
   
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- lemma beatty_theorem_forward_union'' ( q : ℝ ) (hq : irrational q) (h_q_gt_one : q > 1) (h_inter : (B q) ∩ (B ( q/(q-1))) = ∅) : 
+-- (B q) ∪ (B ( q/(q-1))) = {n : ℤ | n ≥ 1 } :=
+-- begin
+--   have h_p_gt_one := h_p_gt_one q,
+--   set p := (q/(q-1)),
+--   ext,
+--   split, {
+--     intro hx,
+--     repeat {rw set.mem_union at hx},
+--     cases hx with hxq hxp,
+--     {
+--       rw mem_b_iff at hxq,
+--       cases hxq with m hm,
+--       cases hm with hm hx',
+--       change x ≥ 1,
+--       have hge := floor_ge_one m hm q h_q_gt_one,
+--       rwa ← hx' at hge,
+--     }, {
+--       rw mem_b_iff at hxp,
+--       cases hxp with m hm,
+--       cases hm with hm hx',
+--       change x ≥ 1,
+--       have hge := floor_ge_one m hm p h_p_gt_one,
+--       rwa ← hx' at hge,
+--     },
+--   }, {
+--     intro hx,
+--     have hx' : x ≥ 1 := set.mem_def.mp hx, clear hx,
+--     rw set.mem_union,
+--     repeat {rw mem_b_iff},
+--     sorry,
+    
+    
+
+--   },
+
+-- end
