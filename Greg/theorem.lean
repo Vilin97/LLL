@@ -1,12 +1,10 @@
 import data.real.basic
 
-def T := ℝ
 
-variables (a b c : ℝ)
+-- variables (T : Type) [comm_ring T](a b : T)
+variables (a b : ℝ)
 
-
-
-theorem easy_thing : (a^2 - b^2 = (a+b)*(a-b)) :=
+theorem square_diff : (a^2 - b^2 = (a+b)*(a-b)) :=
 begin
   rw mul_sub,
   rw add_mul,
@@ -20,13 +18,13 @@ begin
   rw sq,
 end
 
-theorem easier_thing : (a^2 - b^2 = (a+b)*(a-b)) :=
+theorem square_diff_by_ring : (a^2 - b^2 = (a+b)*(a-b)) :=
 begin
   ring,
 end
 
-#check easy_thing
-#check easier_thing
+#check square_diff
+#check square_diff_by_ring
 
 -- An example of how to use library_search
 lemma foo : (a^2 = a*a) := by library_search
