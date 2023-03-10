@@ -166,11 +166,11 @@ begin
   use d * c,
 end
 
-#check oka_family.mk (principal_ideal_set B) (top_is_principal) (principal_oka_condition)
-
-def principal_oka_family : oka_family B :=
+def principal_oka_family {A : Type} [comm_ring A]: oka_family A :=
 {
-  carrier := principal_ideal_set B,
+  carrier := principal_ideal_set A,
   contains_ring' := top_is_principal,
   oka_condition' := principal_oka_condition,
 }
+
+#check principal_oka_family
