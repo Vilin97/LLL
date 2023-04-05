@@ -29,6 +29,8 @@ begin
 end
 
 
+
+
 -- good examples of easy lemmas in lean
 lemma self_div_self_sub_one_neq_one (q : ℝ ) (hq : q > 1) : q/(q-1) ≠ 1 :=
 begin
@@ -38,8 +40,12 @@ begin
   repeat {linarith,},
 end 
 
+
+
+
 lemma self_div_self_sub_one_neq_zero (q : ℝ ) (hq : q > 1) : q/(q-1) ≠ 0 :=
 begin
+  
   by_contra hc,
   have hc' : (q - 1) * (q / (q - 1)) = (q - 1 ) * 0 := congr_arg (has_mul.mul (q - 1)) hc,
   rw mul_zero at hc',
@@ -51,6 +57,8 @@ begin
   linarith,
   linarith,
 end 
+
+#print self_div_self_sub_one_neq_one
 
 lemma irrat_mul_sub_irrat (a b : ℤ) (q : ℝ) (hsub : (a : ℝ)  - ↑b ≠ 0) (hq : irrational q) :
   irrational (q *(↑a - ↑b)) :=

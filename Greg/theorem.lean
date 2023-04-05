@@ -22,11 +22,16 @@ end
 
 theorem easier_thing : (a^2 - b^2 = (a+b)*(a-b)) :=
 begin
-  ring,
+  exact sq_sub_sq a b,
 end
+
+#check (5 : ℕ)
+#check 5 + 5
 
 #check easy_thing
 #check easier_thing
+
+#print easy_thing
 
 -- An example of how to use library_search
 lemma foo : (a^2 = a*a) := by library_search
