@@ -19,12 +19,17 @@ end
 
 theorem square_diff_by_ring : (a^2 - b^2 = (a+b)*(a-b)) :=
 begin
-  ring,
+  exact sq_sub_sq a b,
 end
 
 
-#check square_diff
-#check square_diff_by_ring
+#check (5 : ℕ)
+#check 5 + 5
+
+#check easy_thing
+#check easier_thing
+
+#print easy_thing
 
 -- An example of how to use library_search
 lemma foo : (a^2 = a*a) := sq a
