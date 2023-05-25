@@ -27,6 +27,7 @@ class has_euclid_post5 (line point : Type) extends has_goes_thru line point :=
 
 open has_euclid_post5
 
+
 section
 variables {line : Type} (point: Type) [has_goes_thru line point] (l m n : line)
 
@@ -53,7 +54,7 @@ theorem parallel_trans : parallel point l m → parallel point m n → parallel 
   rwa plm,
   right,
   rwa ←pmn,
-  sorry, -- we need something additional for this, I think
+  sorry, -- we need Euclid's 5th postulate
 end
 end
 
