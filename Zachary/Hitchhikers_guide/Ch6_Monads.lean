@@ -1,3 +1,6 @@
+import category_theory.category.basic
+
+
 def connect {α : Type} {β : Type} :
   option α → (α → option β) → option β
   | option.none f := option.none
