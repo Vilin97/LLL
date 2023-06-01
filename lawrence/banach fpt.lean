@@ -26,6 +26,9 @@ def contraction_sequence {X : Type} (T : X → X) (a : X) : ℕ → X
 | 0 := a
 | (n + 1) := T (contraction_sequence n)
 
+def sequence_tendsto {X : Type*} [complete_metric_space X] (a : ℕ → X) (t : X) : Prop :=
+  ∀ ε > 0, ∃ N, ∀ n ≥ N, dist (a n) t < ε
+
 lemma helper1 {X : Type} [metric_space X] (T : contraction_mapping X) (a : X) : (T a = T.T a) := rfl
 @[simp] lemma helper2 {X : Type} [metric_space X] (T : contraction_mapping X) (a : X) (n : ℕ) : contraction_sequence T a (n+1) = T (contraction_sequence T a n) := rfl
 
@@ -65,6 +68,7 @@ begin
   -- },
 
   -- exact cauchy_seq_iff_le_epsilon.2 (λ n hn, H),
+  sorry,
 end
 
 lemma contraction_sequence_converges {X : Type} [complete_metric_space X] (T : contraction_mapping X) (a : X) :
