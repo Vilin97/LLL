@@ -13,19 +13,23 @@ import .greg_lemmas
 --O prove union part
 
 
+
 -- definition of a Beatty seq
 def B : ℝ → set ℤ  := λ r, { n | ∃ m : ℤ , (m ≥ 1 ) ∧ ((n : ℤ ) = int.floor ((m : ℝ)  * r) ) }
 
 
 lemma mem_b_iff {q : ℝ} {k : ℤ }  : (k ∈ (B q)) ↔ ∃ m : ℤ   , (m ≥ 1 ) ∧ (k : ℤ )  = int.floor ((m : ℝ) * q ) :=
 begin
+  -- k is in B(q) if and only if it is the floor of a positive integer times q
   split, 
+  -- assume k is in B(q), then show it is the floor of a positive integer times q
   intro hk,
-  rw set.mem_def at hk,
-  exact hk,
+  rw set.mem_def at hk,  -- write the definition of set membership in terms of a universal quantifier and a predicate
+  exact hk, -- show that the predicate on k is true
+  -- assume k is the floor of a positive integer times q, show that k is in B(q)
   intro h,
-  rw set.mem_def,
-  assumption,
+  rw set.mem_def, -- write the definition of set membership in terms of a universal quantifier and a predicate
+  assumption, -- show that the predicate on k is true
 end
 
 
@@ -63,6 +67,9 @@ end
 lemma irrat_mul_sub_irrat (a b : ℤ) (q : ℝ) (hsub : (a : ℝ)  - ↑b ≠ 0) (hq : irrational q) :
   irrational (q *(↑a - ↑b)) :=
 begin
+  -- We need to prove that `q * (a - b)` is irrational.  The key observation is that
+  -- `a - b` is an integer, so we can use `irrational_mul_int_iff` to rewrite the goal
+  -- as `q * (a - b) ≠ 0`.  The resulting goal is now the same as the hypothesis `hq`.
   have hsub' : a - b ≠ 0,
   {
     norm_cast at *,
